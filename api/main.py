@@ -60,3 +60,16 @@ def handle_message(event: MessageEvent):
         event.reply_token,
         TextSendMessage("入力内容を確認できませんでした💦")
     )
+# － メッセージハンドラ ---------------
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text(event):
+    text = event.message.text.lower()
+
+    if text == "ping":
+        bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="pong"))
+    else:
+        bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="「ping」と送ってみてください 😊"))
