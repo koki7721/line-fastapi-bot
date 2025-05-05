@@ -1,22 +1,34 @@
+# ─────────────────────────────────────────
+# main.py  ― LINE Messaging API × FastAPI
+# （最小構成のサンプルボット）
+# ─────────────────────────────────────────
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
+
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
-import os, re
+# ↓ ここの import に TextSendMessage を **必ず** 含める
+from linebot.models import (
+    MessageEvent,
+    TextMessage,
+    TextSendMessage,
+)
+
+import os
+import re
 
 app = FastAPI()
 
-# ── 環境変数を読む ──────────────────────
+# ── 環境変数からチャネル情報を取得 ─────────────
 bot_api  = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler  = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
-# ── ヘルスチェック ───────────────────────
+# ── ヘルスチェック用エンドポイント ───────────
 @app.get("/")
 def healthcheck():
     return {"status": "ok"}
 
-# ── LINE からのコールバック受信 ───────────
+# ── LINE Webhook 受信エンドポイント ──────────
 @app.post("/api/callback", response_class=PlainTextResponse)
 async def callback(request: Request):
     signature = request.headers.get("X-Line-Signature", "")
@@ -30,46 +42,36 @@ async def callback(request: Request):
 
     return "OK"
 
-# ── メッセージハンドラ ────────────────────
+# ── メッセージイベントハンドラ ───────────────
 @handler.add(MessageEvent, message=TextMessage)
-def handle_message(event: MessageEvent):
-    msg = event.message.text.strip()
+def handle_text(event):
+    msg = event.message.text.strip().lower()
 
-    # 動作テスト
+    # 1) ping-pong テスト
     if msg == "ping":
-        bot_api.reply_message(event.reply_token, TextSendMessage("pong"))
+        bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="pong")
+        )
         return
 
-    # 不動産 bot の簡易ロジック
+    # 2) 不動産ボット簡易ロジック（例）
     if msg == "物件":
         bot_api.reply_message(
             event.reply_token,
-            TextSendMessage("ご希望のエリアを教えてください！（例：大阪市北区）")
+            TextSendMessage(text="ご希望エリアを教えてください！（例：大阪市北区）")
         )
         return
 
     if re.match(r".*(区|市)$", msg):
         bot_api.reply_message(
             event.reply_token,
-            TextSendMessage("ご予算を教えてください！（例：3000万円）")
+            TextSendMessage(text="ご予算を教えてください！（例：3000万円）")
         )
         return
 
-    # デフォルト応答
+    # 3) デフォルト応答
     bot_api.reply_message(
         event.reply_token,
-        TextSendMessage("入力内容を確認できませんでした💦")
+        TextSendMessage(text="入力内容を確認できませんでした🤖")
     )
-# － メッセージハンドラ ---------------
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text(event):
-    text = event.message.text.lower()
-
-    if text == "ping":
-        bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="pong"))
-    else:
-        bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="「ping」と送ってみてください 😊"))
