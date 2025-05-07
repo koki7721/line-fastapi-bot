@@ -61,3 +61,6 @@ def handle_text(event):
         event.reply_token,
         TextSendMessage(text="入力内容を確認できませんでした🤖")
     )
+# --- FastAPI ハンドラーを追加（Vercel 用） ---
+def handler(req, context):
+    return app
