@@ -7,7 +7,13 @@
     }
   ],
   "routes": [
-    { "src": "/",         "dest": "API/main.py" },       // ← 追加
-    { "src": "/api/(.*)", "dest": "API/main.py" }        // ← 既存
+    {
+      "src": "/",
+      "dest": "API/main.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "API/main.py"
+    }
   ]
 }
